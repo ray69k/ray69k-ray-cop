@@ -108,104 +108,145 @@
             display: block;
         }
 
-        .login-history {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #eee;
+        /* Welcome Page Styles */
+        .welcome-page {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in;
         }
 
-        .login-history h3 {
-            color: #333;
-            font-size: 16px;
-            margin-bottom: 15px;
+        .welcome-page.active {
+            display: block;
         }
 
-        .history-list {
-            max-height: 250px;
-            overflow-y: auto;
-            font-size: 13px;
-        }
-
-        .history-item {
-            background: #f9f9f9;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            border-left: 3px solid #667eea;
-        }
-
-        .history-item strong {
+        .welcome-page h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
             color: #667eea;
         }
 
-        .history-item .timestamp {
-            color: #999;
-            font-size: 12px;
-            margin-top: 4px;
+        .welcome-message {
+            font-size: 24px;
+            color: #555;
+            margin-bottom: 30px;
         }
 
-        .clear-history {
-            margin-top: 15px;
-            padding: 8px 12px;
-            background: #f0f0f0;
+        .user-info {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .user-info p {
+            margin: 10px 0;
             color: #666;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            width: 100%;
+            font-size: 16px;
         }
 
-        .clear-history:hover {
-            background: #e0e0e0;
+        .user-info strong {
+            color: #667eea;
+        }
+
+        .logout-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: auto;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Login Page Styles */
+        .login-page {
+            display: block;
+        }
+
+        .login-page.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔐 Login</h1>
-        
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" placeholder="Enter your username" required>
+        <!-- Login Page -->
+        <div id="loginPage" class="login-page">
+            <h1>🔐 Login</h1>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit">Login</button>
+            </form>
+
+            <div id="message" class="message"></div>
+        </div>
+
+        <!-- Welcome Page -->
+        <div id="welcomePage" class="welcome-page">
+            <h1>👋 Welcome!</h1>
+            <p class="welcome-message">Welcome to my page</p>
+            
+            <div class="user-info">
+                <p><strong>Username:</strong> <span id="displayUsername"></span></p>
+                <p><strong>Email:</strong> <span id="displayEmail"></span></p>
+                <p><strong>Login Date:</strong> <span id="displayDate"></span></p>
             </div>
 
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" placeholder="Enter your email" required>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Enter your password" required>
-            </div>
-
-            <button type="submit">Login</button>
-        </form>
-
-        <div id="message" class="message"></div>
-
-        <div class="login-history">
-            <h3>Login History</h3>
-            <div class="history-list" id="historyList">
-                <p style="color: #999; font-size: 13px;">No login attempts yet</p>
-            </div>
-            <button class="clear-history" id="clearBtn">Clear History</button>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
         </div>
     </div>
 
     <script>
         const loginForm = document.getElementById('loginForm');
+        const loginPage = document.getElementById('loginPage');
+        const welcomePage = document.getElementById('welcomePage');
         const usernameInput = document.getElementById('username');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const messageDiv = document.getElementById('message');
-        const historyList = document.getElementById('historyList');
-        const clearBtn = document.getElementById('clearBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
 
-        // Load and display history on page load
-        loadHistory();
+        // Check if user is already logged in
+        window.addEventListener('load', function() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                showWelcomePage(JSON.parse(currentUser));
+            }
+        });
 
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -219,53 +260,41 @@
                 return;
             }
 
-            // Create login record
-            const loginRecord = {
+            // Store user data
+            const userData = {
                 username: username,
                 email: email,
-                password: password,
-                date: new Date().toLocaleString(),
-                timestamp: Date.now()
+                date: new Date().toLocaleString()
             };
 
-            // Store in localStorage
-            let loginHistory = JSON.parse(localStorage.getItem('loginHistory')) || [];
-            loginHistory.push(loginRecord);
-            localStorage.setItem('loginHistory', JSON.stringify(loginHistory));
+            localStorage.setItem('currentUser', JSON.stringify(userData));
 
-            // Show success message
+            // Show success message briefly
             showMessage(`Login successful! Welcome, ${username}`, 'success');
 
             // Clear form
             loginForm.reset();
 
-            // Update history display
-            loadHistory();
-
-            // Clear message after 3 seconds
+            // Redirect to welcome page after 1 second
             setTimeout(() => {
-                messageDiv.classList.remove('success', 'error');
-            }, 3000);
+                showWelcomePage(userData);
+            }, 1000);
         });
 
-        function loadHistory() {
-            const loginHistory = JSON.parse(localStorage.getItem('loginHistory')) || [];
+        function showWelcomePage(userData) {
+            loginPage.classList.add('hidden');
+            welcomePage.classList.add('active');
+            
+            document.getElementById('displayUsername').textContent = userData.username;
+            document.getElementById('displayEmail').textContent = userData.email;
+            document.getElementById('displayDate').textContent = userData.date;
+        }
 
-            if (loginHistory.length === 0) {
-                historyList.innerHTML = '<p style="color: #999; font-size: 13px;">No login attempts yet</p>';
-                return;
-            }
-
-            // Display in reverse order (newest first)
-            historyList.innerHTML = loginHistory
-                .reverse()
-                .map((record, index) => `
-                    <div class="history-item">
-                        <strong>${record.username}</strong> (${record.email})
-                        <div class="timestamp">${record.date}</div>
-                    </div>
-                `)
-                .join('');
+        function showLoginPage() {
+            welcomePage.classList.remove('active');
+            loginPage.classList.remove('hidden');
+            loginForm.reset();
+            messageDiv.classList.remove('success', 'error');
         }
 
         function showMessage(text, type) {
@@ -273,15 +302,9 @@
             messageDiv.className = `message ${type}`;
         }
 
-        clearBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to clear all login history?')) {
-                localStorage.removeItem('loginHistory');
-                loadHistory();
-                showMessage('History cleared', 'success');
-                setTimeout(() => {
-                    messageDiv.classList.remove('success', 'error');
-                }, 2000);
-            }
+        logoutBtn.addEventListener('click', function() {
+            localStorage.removeItem('currentUser');
+            showLoginPage();
         });
     </script>
 </body>
