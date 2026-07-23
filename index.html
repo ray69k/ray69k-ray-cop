@@ -191,26 +191,8 @@
         }
 
         /* Page visibility */
-        .login-page,
-        .forgot-password-page {
-            display: block;
-        }
-
-        .login-page.hidden,
-        .forgot-password-page.hidden {
-            display: none;
-        }
-
-        .forgot-password-page.hidden {
-            display: none;
-        }
-
-        .forgot-password-page {
-            display: none;
-        }
-
-        .forgot-password-page.active {
-            display: block;
+        .hidden {
+            display: none !important;
         }
 
         @keyframes fadeIn {
@@ -228,7 +210,7 @@
 <body>
     <div class="container">
         <!-- Login Page -->
-        <div id="loginPage" class="login-page">
+        <div id="loginPage">
             <h1>🔐 Login</h1>
             
             <form id="loginForm">
@@ -253,7 +235,7 @@
         </div>
 
         <!-- Forgot Password Page -->
-        <div id="forgotPasswordPage" class="forgot-password-page">
+        <div id="forgotPasswordPage" class="hidden">
             <h2>🔑 Reset Password</h2>
             
             <form id="forgotPasswordForm">
@@ -273,7 +255,7 @@
         </div>
 
         <!-- Welcome Page -->
-        <div id="welcomePage" class="welcome-page">
+        <div id="welcomePage" class="hidden">
             <h1>👋 Welcome!</h1>
             <p class="welcome-message">Welcome to my page</p>
             
@@ -377,7 +359,7 @@
         function showWelcomePage(userData) {
             loginPage.classList.add('hidden');
             forgotPasswordPage.classList.add('hidden');
-            welcomePage.classList.add('active');
+            welcomePage.classList.remove('hidden');
             
             document.getElementById('displayUsernameOrEmail').textContent = userData.usernameOrEmail;
         }
@@ -385,7 +367,7 @@
         function showLoginPage() {
             loginPage.classList.remove('hidden');
             forgotPasswordPage.classList.add('hidden');
-            welcomePage.classList.remove('active');
+            welcomePage.classList.add('hidden');
             loginForm.reset();
             messageDiv.classList.remove('success', 'error');
             forgotPasswordMessageDiv.classList.remove('success', 'error');
@@ -394,7 +376,7 @@
         function showForgotPasswordPage() {
             loginPage.classList.add('hidden');
             forgotPasswordPage.classList.remove('hidden');
-            welcomePage.classList.remove('active');
+            welcomePage.classList.add('hidden');
             forgotPasswordForm.reset();
             forgotPasswordMessageDiv.classList.remove('success', 'error');
         }
