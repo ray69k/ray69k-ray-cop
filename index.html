@@ -56,8 +56,7 @@
         }
 
         input[type="text"],
-        input[type="password"],
-        input[type="email"] {
+        input[type="password"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #ddd;
@@ -67,8 +66,7 @@
         }
 
         input[type="text"]:focus,
-        input[type="password"]:focus,
-        input[type="email"]:focus {
+        input[type="password"]:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -88,10 +86,6 @@
 
         button:hover {
             transform: translateY(-2px);
-        }
-
-        button:active {
-            transform: translateY(0);
         }
 
         .message {
@@ -118,7 +112,6 @@
         .form-links {
             text-align: center;
             margin-top: 15px;
-            font-size: 14px;
         }
 
         .form-links a {
@@ -126,6 +119,7 @@
             text-decoration: none;
             cursor: pointer;
             font-weight: 600;
+            font-size: 14px;
         }
 
         .form-links a:hover {
@@ -134,7 +128,6 @@
 
         .welcome-page h1 {
             font-size: 48px;
-            margin-bottom: 20px;
             color: #667eea;
         }
 
@@ -182,26 +175,19 @@
             transform: translateY(-2px);
         }
 
-        .hidden {
-            display: none !important;
+        .page {
+            display: none;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .page.active {
+            display: block;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Login Page -->
-        <div id="loginPage">
+        <div id="loginPage" class="page active">
             <h1>🔐 Login</h1>
             
             <form id="loginForm">
@@ -218,7 +204,7 @@
                 <button type="submit">Login</button>
             </form>
 
-            <div id="message" class="message"></div>
+            <div id="loginMessage" class="message"></div>
 
             <div class="form-links">
                 <a id="forgotPasswordLink">Forgot Password?</a>
@@ -226,7 +212,7 @@
         </div>
 
         <!-- Forgot Password Page -->
-        <div id="forgotPasswordPage" class="hidden">
+        <div id="forgotPasswordPage" class="page">
             <h2>🔑 Reset Password</h2>
             
             <form id="forgotPasswordForm">
@@ -238,7 +224,7 @@
                 <button type="submit">Send Reset Link</button>
             </form>
 
-            <div id="forgotPasswordMessage" class="message"></div>
+            <div id="resetMessage" class="message"></div>
 
             <div class="form-links">
                 <a id="backToLoginLink">Back to Login</a>
@@ -246,7 +232,7 @@
         </div>
 
         <!-- Welcome Page -->
-        <div id="welcomePage" class="hidden">
+        <div id="welcomePage" class="page">
             <h1>👋 Welcome!</h1>
             <p class="welcome-message">Welcome to my page</p>
             
@@ -259,31 +245,35 @@
     </div>
 
     <script>
-        const loginForm = document.getElementById('loginForm');
-        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        // Clear old localStorage on first load
+        localStorage.removeItem('currentUser');
+
+        // Elements
         const loginPage = document.getElementById('loginPage');
         const forgotPasswordPage = document.getElementById('forgotPasswordPage');
         const welcomePage = document.getElementById('welcomePage');
+
+        const loginForm = document.getElementById('loginForm');
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+
         const usernameOrEmailInput = document.getElementById('usernameOrEmail');
         const passwordInput = document.getElementById('password');
         const resetUsernameOrEmailInput = document.getElementById('resetUsernameOrEmail');
-        const messageDiv = document.getElementById('message');
-        const forgotPasswordMessageDiv = document.getElementById('forgotPasswordMessage');
-        const logoutBtn = document.getElementById('logoutBtn');
+
+        const loginMessage = document.getElementById('loginMessage');
+        const resetMessage = document.getElementById('resetMessage');
+
         const forgotPasswordLink = document.getElementById('forgotPasswordLink');
         const backToLoginLink = document.getElementById('backToLoginLink');
+        const logoutBtn = document.getElementById('logoutBtn');
 
-        // Initialize - clear old data and show login page
-        function initialize() {
-            loginPage.classList.remove('hidden');
-            forgotPasswordPage.classList.add('hidden');
-            welcomePage.classList.add('hidden');
+        // Show page function
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            page.classList.add('active');
         }
 
-        // Initialize on page load
-        initialize();
-
-        // Login form submission
+        // Login handler
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -291,102 +281,63 @@
             const password = passwordInput.value.trim();
 
             if (!usernameOrEmail || !password) {
-                showMessage('Please fill in all fields', 'error');
+                loginMessage.textContent = 'Please fill in all fields';
+                loginMessage.className = 'message error';
                 return;
             }
 
-            // Store user data
-            const userData = {
-                usernameOrEmail: usernameOrEmail
-            };
-
+            const userData = { usernameOrEmail: usernameOrEmail };
             localStorage.setItem('currentUser', JSON.stringify(userData));
 
-            // Show success message briefly
-            showMessage(`Login successful! Welcome`, 'success');
+            loginMessage.textContent = 'Login successful! Welcome';
+            loginMessage.className = 'message success';
 
-            // Clear form
             loginForm.reset();
 
-            // Redirect to welcome page after 1 second
             setTimeout(() => {
-                showWelcomePage(userData);
+                document.getElementById('displayUsernameOrEmail').textContent = usernameOrEmail;
+                showPage(welcomePage);
             }, 1000);
         });
 
-        // Forgot Password link click
+        // Forgot Password link
         forgotPasswordLink.addEventListener('click', function(e) {
             e.preventDefault();
-            showForgotPasswordPage();
+            showPage(forgotPasswordPage);
         });
 
-        // Back to Login link click
+        // Back to Login link
         backToLoginLink.addEventListener('click', function(e) {
             e.preventDefault();
-            showLoginPage();
+            showPage(loginPage);
         });
 
-        // Forgot Password form submission
+        // Forgot Password form handler
         forgotPasswordForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
             const resetUsernameOrEmail = resetUsernameOrEmailInput.value.trim();
 
             if (!resetUsernameOrEmail) {
-                showForgotPasswordMessage('Please enter your username or email', 'error');
+                resetMessage.textContent = 'Please enter your username or email';
+                resetMessage.className = 'message error';
                 return;
             }
 
-            // Show success message
-            showForgotPasswordMessage(`Password reset link sent to ${resetUsernameOrEmail}. Check your email!`, 'success');
+            resetMessage.textContent = `Password reset link sent to ${resetUsernameOrEmail}. Check your email!`;
+            resetMessage.className = 'message success';
 
-            // Clear form
             forgotPasswordForm.reset();
 
-            // Redirect back to login after 2 seconds
             setTimeout(() => {
-                showLoginPage();
+                showPage(loginPage);
             }, 2000);
         });
 
-        function showWelcomePage(userData) {
-            loginPage.classList.add('hidden');
-            forgotPasswordPage.classList.add('hidden');
-            welcomePage.classList.remove('hidden');
-            
-            document.getElementById('displayUsernameOrEmail').textContent = userData.usernameOrEmail;
-        }
-
-        function showLoginPage() {
-            loginPage.classList.remove('hidden');
-            forgotPasswordPage.classList.add('hidden');
-            welcomePage.classList.add('hidden');
-            loginForm.reset();
-            messageDiv.classList.remove('success', 'error');
-            forgotPasswordMessageDiv.classList.remove('success', 'error');
-        }
-
-        function showForgotPasswordPage() {
-            loginPage.classList.add('hidden');
-            forgotPasswordPage.classList.remove('hidden');
-            welcomePage.classList.add('hidden');
-            forgotPasswordForm.reset();
-            forgotPasswordMessageDiv.classList.remove('success', 'error');
-        }
-
-        function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-        }
-
-        function showForgotPasswordMessage(text, type) {
-            forgotPasswordMessageDiv.textContent = text;
-            forgotPasswordMessageDiv.className = `message ${type}`;
-        }
-
+        // Logout handler
         logoutBtn.addEventListener('click', function() {
             localStorage.removeItem('currentUser');
-            showLoginPage();
+            showPage(loginPage);
         });
     </script>
 </body>
