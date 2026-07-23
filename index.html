@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        input[type="email"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .login-history {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+
+        .login-history h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .history-list {
+            max-height: 250px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .history-item {
+            background: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+
+        .history-item strong {
+            color: #667eea;
+        }
+
+        .history-item .timestamp {
+            color: #999;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .clear-history {
+            margin-top: 15px;
+            padding: 8px 12px;
+            background: #f0f0f0;
+            color: #666;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .clear-history:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Login</h1>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Enter your username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <div id="message" class="message"></div>
+
+        <div class="login-history">
+            <h3>Login History</h3>
+            <div class="history-list" id="historyList">
+                <p style="color: #999; font-size: 13px;">No login attempts yet</p>
+            </div>
+            <button class="clear-history" id="clearBtn">Clear History</button>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const messageDiv = document.getElementById('message');
+        const historyList = document.getElementById('historyList');
+        const clearBtn = document.getElementById('clearBtn');
+
+        // Load and display history on page load
+        loadHistory();
+
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const username = usernameInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !email || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+
+            // Create login record
+            const loginRecord = {
+                username: username,
+                email: email,
+                password: password,
+                date: new Date().toLocaleString(),
+                timestamp: Date.now()
+            };
+
+            // Store in localStorage
+            let loginHistory = JSON.parse(localStorage.getItem('loginHistory')) || [];
+            loginHistory.push(loginRecord);
+            localStorage.setItem('loginHistory', JSON.stringify(loginHistory));
+
+            // Show success message
+            showMessage(`Login successful! Welcome, ${username}`, 'success');
+
+            // Clear form
+            loginForm.reset();
+
+            // Update history display
+            loadHistory();
+
+            // Clear message after 3 seconds
+            setTimeout(() => {
+                messageDiv.classList.remove('success', 'error');
+            }, 3000);
+        });
+
+        function loadHistory() {
+            const loginHistory = JSON.parse(localStorage.getItem('loginHistory')) || [];
+
+            if (loginHistory.length === 0) {
+                historyList.innerHTML = '<p style="color: #999; font-size: 13px;">No login attempts yet</p>';
+                return;
+            }
+
+            // Display in reverse order (newest first)
+            historyList.innerHTML = loginHistory
+                .reverse()
+                .map((record, index) => `
+                    <div class="history-item">
+                        <strong>${record.username}</strong> (${record.email})
+                        <div class="timestamp">${record.date}</div>
+                    </div>
+                `)
+                .join('');
+        }
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+        }
+
+        clearBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all login history?')) {
+                localStorage.removeItem('loginHistory');
+                loadHistory();
+                showMessage('History cleared', 'success');
+                setTimeout(() => {
+                    messageDiv.classList.remove('success', 'error');
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>
